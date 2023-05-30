@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator go {
+  provider = "go run github.com/prisma/prisma-client-go"
+  output   = "./db"
+}
+
+model User {
+  // base fields
+  id        String    @id @unique @default(uuid()) @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+  name      String?
+
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+
+  // The role on the platform, this is NOT tenant-specific
+  role Role @default(CLIENT)
+
+  // a list of tenant memberships
+  memberships TenantMember[]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  CLIENT
+}
+
+model Tenant {
+  // base fields
+  id        String    @id @unique @default(uuid()) @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+  name      String
+
+  members     TenantMember[]
+}
+
+enum TenantRole {
+  ADMIN
+  MEMBER
+}
+
+model TenantMember {
+  // base fields
+  id        String    @id @unique @default(uuid()) @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+
+  tenantRole TenantRole @default(MEMBER)
+
+  // relations
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tenantId String  @db.Uuid
+  user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId   String? @db.Uuid
+
+  @@unique([tenantId, userId])
+}
+
