@@ -13,3 +13,8 @@ go mod download
 go run github.com/prisma/prisma-client-go migrate dev --name init
 ```
 
+To run the file:
+
+```
+go run main.go
+```
